@@ -89,7 +89,7 @@ export default function Sidebar({
 
   return (
     <motion.div
-      className="fixed left-4 top-4 bottom-4 bg-purple-800 rounded-lg shadow-lg overflow-hidden z-50"
+      className="fixed left-4 top-4 bottom-4 bg-black/20 rounded-lg shadow-lg overflow-hidden z-50"
       initial="collapsed"
       animate={isOpen ? "expanded" : "collapsed"}
       variants={sidebarVariants}

@@ -163,7 +163,7 @@ const Chatbot: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-purple-900 text-white">
+    <div className="flex h-screen bg-purple-800 text-white">
       <Sidebar
         onConversationSelect={handleConversationSelect}
         onNewChat={handleNewChat}
@@ -178,7 +178,7 @@ const Chatbot: React.FC = () => {
                 initial={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="absolute inset-0 flex items-center justify-center"
+                className="absolute inset-0 flex items-center justify-center z-20"
               >
                 <WelcomeScreen onPromptSelect={handleSubmit} />
               </motion.div>

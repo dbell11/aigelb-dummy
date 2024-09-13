@@ -10,17 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        afnb: {
-          blue: {
-            400: "#002060",
-            500: "#00143D",
-          },
+        yellow: {
+          400: "#FEEB56",
         },
-        md: {
-          blue: {
-            400: "#004b6e",
-            500: "#003852",
-          },
+        purple: {
+          400: "#4B1D98",
+          600: "#281036",
+          800: "#281036",
         },
       },
       keyframes: {
