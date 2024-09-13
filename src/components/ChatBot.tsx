@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "@/components/Sidebar";
@@ -164,6 +165,15 @@ const Chatbot: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-purple-800 text-white">
+      <div className="background-svg w-full h-screen fixed top-0 left-0 z-10 flex flex-row justify-center">
+        <Image
+          src="/images/logos/bg.svg"
+          alt="ai-gelb logo"
+          width={1127}
+          height={664}
+          className="max-w-full h-auto"
+        />
+      </div>
       <Sidebar
         onConversationSelect={handleConversationSelect}
         onNewChat={handleNewChat}

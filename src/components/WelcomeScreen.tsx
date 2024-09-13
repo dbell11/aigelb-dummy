@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { PiQuestionFill } from "react-icons/pi";
 
 interface WelcomeScreenProps {
   onPromptSelect: (prompt: string) => void;
@@ -27,24 +28,30 @@ export default function WelcomeScreen({ onPromptSelect }: WelcomeScreenProps) {
         height={96}
         className="mb-4"
       />
-      <h1 className="text-4xl font-bold mb-4">
-        Erleben Sie <span className="text-yellow-400">ai-gelb</span>
+      <h1 className="text-4xl font-bold mb-4 xl:text-6xl">
+        Erleben Sie <span className="text-gradient-yellow">ai-gelb</span>
       </h1>
-      <p className="text-xl mb-8">
+      <p className="text-xl mb-2 text-center xl:text-2xl font-extralight">
         Ich bin ai-gelb, Ihr KI-Assistent für einfache und effektive digitale
         Kommunikation.
       </p>
-      <h2 className="text-2xl font-semibold mb-4">
+      <h2 className="text-2xl font-normal mb-8">
         Wie kann ich Ihnen heute helfen?
       </h2>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 px-4 md:max-w-5xl md:mx-auto">
         {prompts.map((prompt, index) => (
           <button
             key={index}
             onClick={() => onPromptSelect(prompt)}
-            className="bg-purple-700 hover:bg-purple-600 p-4 rounded-lg text-left"
+            className="bg-white/90 rounded text-left text-black p-4 shadow-[0px_2px_15px_rgba(0,0,0,0.25)] border-transparent border-[5px] flex items-center md:items-start space-x-2 md:space-x-3 xl:transition-all xl:duration-300  xl:hover:border-yellow-600"
           >
-            {prompt}
+            <PiQuestionFill
+              size={32}
+              className="text-purple-400 flex-shrink-0"
+            />
+            <span className="line-clamp-1 md:line-clamp-none xl:text-xl xl:leading-[160%]">
+              {prompt}
+            </span>
           </button>
         ))}
       </div>

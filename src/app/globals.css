@@ -25,3 +25,10 @@ body {
     text-wrap: balance;
   }
 }
+
+.text-gradient-yellow {
+  background: linear-gradient(180deg, #feeb56 0%, #ffc28a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

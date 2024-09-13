@@ -11,7 +11,7 @@ export default function InputArea({ onSend, disabled }) {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 relative z-40">
       <div className="flex max-w-5xl mx-auto">
         <input
           type="text"

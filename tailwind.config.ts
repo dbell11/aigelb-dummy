@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+const defaultTheme = require("tailwindcss/defaultTheme");
 
 const config: Config = {
   content: [
@@ -8,10 +9,15 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    borderRadius: {
+      ...defaultTheme.borderRadius,
+      DEFAULT: "8px",
+    },
     extend: {
       colors: {
         yellow: {
           400: "#FEEB56",
+          600: "#ffc28a",
         },
         purple: {
           400: "#4B1D98",
