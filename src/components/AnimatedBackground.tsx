@@ -1,63 +1,63 @@
-import React, { useState, useEffect, useRef } from "react";
-
-const getRandomValue = (min: number, max: number) =>
-  Math.random() * (max - min) + min;
-
-const generateAnimationProps = () => ({
-  scale: getRandomValue(0.8, 1.2),
-  xRotation: getRandomValue(-20, 20),
-  yRotation: getRandomValue(-20, 20),
-  zTranslation: getRandomValue(-20, 20),
-});
+import React, { useEffect, useRef, useState } from "react";
 
 const ThreeDAnimatedBackgroundSVG: React.FC = () => {
-  const [animationProps, setAnimationProps] = useState(generateAnimationProps);
   const svgRef = useRef<SVGSVGElement>(null);
-  const animationRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMouseInWindow, setIsMouseInWindow] = useState(true);
 
   useEffect(() => {
-    let startTime: number | null = null;
-    const duration = 10000; // 10 seconds
-
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const elapsedTime = currentTime - startTime;
-      const progress = Math.min(elapsedTime / duration, 1);
-
-      if (svgRef.current) {
-        const newScale = animationProps.scale;
-        const newXRotation = animationProps.xRotation;
-        const newYRotation = animationProps.yRotation;
-        const newZTranslation = animationProps.zTranslation;
-
-        svgRef.current.style.transform = `
-          rotateX(${newXRotation}deg)
-          rotateY(${newYRotation}deg)
-          translateZ(${newZTranslation}px)
-          scale(${newScale})
-        `;
-      }
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animate);
-      } else {
-        setAnimationProps(generateAnimationProps());
-        startTime = null;
-        animationRef.current = requestAnimationFrame(animate);
-      }
+    const updateMousePosition = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    const handleMouseEnter = () => setIsMouseInWindow(true);
+    const handleMouseLeave = () => setIsMouseInWindow(false);
+
+    window.addEventListener("mousemove", updateMousePosition);
+    window.addEventListener("mouseenter", handleMouseEnter);
+    window.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      window.removeEventListener("mousemove", updateMousePosition);
+      window.removeEventListener("mouseenter", handleMouseEnter);
+      window.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [animationProps]);
+  }, []);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    const container = containerRef.current;
+    if (!svg || !container || !isMouseInWindow) return;
+
+    const rect = container.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const mouseX = mousePosition.x - rect.left;
+    const mouseY = mousePosition.y - rect.top;
+
+    const maxRotation = 15; // Maximale Rotation in Grad
+    const maxTranslation = 20; // Maximale Verschiebung in Pixeln
+
+    const rotateX = ((mouseY - centerY) / centerY) * maxRotation;
+    const rotateY = ((mouseX - centerX) / centerX) * -maxRotation; // Invertiert für natürlichere Bewegung
+    const translateX = ((mouseX - centerX) / centerX) * maxTranslation;
+    const translateY = ((mouseY - centerY) / centerY) * maxTranslation;
+
+    svg.style.transform = `
+      perspective(1000px)
+      rotateX(${rotateX}deg)
+      rotateY(${rotateY}deg)
+      translateX(${translateX}px)
+      translateY(${translateY}px)
+    `;
+  }, [mousePosition, isMouseInWindow]);
 
   return (
-    <div style={{ perspective: "1000px", width: "100%", height: "100%" }}>
+    <div
+      ref={containerRef}
+      style={{ width: "100%", height: "100%", overflow: "hidden" }}
+    >
       <svg
         ref={svgRef}
         width="100%"
@@ -65,11 +65,8 @@ const ThreeDAnimatedBackgroundSVG: React.FC = () => {
         viewBox="0 0 1127 664"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{
-          transition: "transform 10s ease-in-out",
-        }}
+        className="opacity-80"
       >
-        {/* SVG-Inhalt bleibt unverändert */}
         <g style={{ mixBlendMode: "lighten" }} opacity={0.3}>
           <g style={{ mixBlendMode: "lighten" }} filter="url(#filter0_f_74_52)">
             <path
