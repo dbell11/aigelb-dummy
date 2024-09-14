@@ -166,9 +166,13 @@ const Chatbot: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-purple-800 text-white">
-      <div className="background-svg w-full h-screen fixed top-0 left-0 z-10 flex flex-row justify-center">
+      <motion.div
+        className="background-svg w-full h-screen fixed top-0 left-0 z-10 flex flex-row justify-center pointer-events-none"
+        animate={{ opacity: isWelcomeScreenVisible ? 1 : 0.4 }}
+        transition={{ duration: 0.5 }}
+      >
         <AnimatedBackgroundSVG />
-      </div>
+      </motion.div>
       <Sidebar
         onConversationSelect={handleConversationSelect}
         onNewChat={handleNewChat}
