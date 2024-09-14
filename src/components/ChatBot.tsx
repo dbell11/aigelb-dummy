@@ -10,6 +10,7 @@ import InputArea from "@/components/InputArea";
 import { createConversation, addUserMessage } from "@/api";
 import { Message, Conversation } from "@/types";
 import { getAuthToken } from "@/utils";
+import AnimatedBackgroundSVG from "./AnimatedBackground";
 
 const Chatbot: React.FC = () => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -166,13 +167,7 @@ const Chatbot: React.FC = () => {
   return (
     <div className="flex h-screen bg-purple-800 text-white">
       <div className="background-svg w-full h-screen fixed top-0 left-0 z-10 flex flex-row justify-center">
-        <Image
-          src="/images/logos/bg.svg"
-          alt="ai-gelb logo"
-          width={1127}
-          height={664}
-          className="max-w-full h-auto"
-        />
+        <AnimatedBackgroundSVG />
       </div>
       <Sidebar
         onConversationSelect={handleConversationSelect}
