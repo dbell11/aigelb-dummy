@@ -32,3 +32,7 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+.gradient-yellow {
+  background: linear-gradient(180deg, #feeb56 0%, #ffc28a 100%);
+}

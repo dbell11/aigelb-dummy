@@ -3,9 +3,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Message } from "@/types";
-import { ArrowSquareOut, Play } from "@phosphor-icons/react";
+import { SpeakerHigh, Pause, Spinner } from "@phosphor-icons/react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import MarkdownComponents from "@/components/MarkdownComponents";
+import { getAuthToken } from "@/utils";
 
 interface ChatAreaProps {
   messages: Message[];
@@ -39,83 +41,7 @@ const renderMarkdown = (content: string) => {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
-      components={{
-        h1: ({ node, ...props }) => (
-          <h1 className="mb-2 text-white font-semibold text-xl" {...props} />
-        ),
-        h2: ({ node, ...props }) => (
-          <h2 className="mb-2 text-white font-semibold text-lg" {...props} />
-        ),
-        h3: ({ node, ...props }) => (
-          <h3 className="mb-2 text-white font-semibold text-lg" {...props} />
-        ),
-        hr: ({ node, ...props }) => (
-          <hr className="border-white/70" {...props} />
-        ),
-        p: ({ node, ...props }) => (
-          <p className="mb-2 text-white last:mb-0" {...props} />
-        ),
-        ul: ({ node, ...props }) => (
-          <ul className="list-disc pl-4 mb-2 text-white" {...props} />
-        ),
-        ol: ({ node, ...props }) => (
-          <ol className="list-decimal pl-4 mb-2 text-white" {...props} />
-        ),
-        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-        a: ({ node, href, children, ...props }) => (
-          <a
-            className="text inline-flex items-center font-semibold xl:transition-opacity xl:hover:opacity-90"
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            {...props}
-          >
-            <ArrowSquareOut
-              size={20}
-              weight="bold"
-              className="mr-1 self-start flex-shrink-0 pt-[3px]"
-            />
-            {children}
-          </a>
-        ),
-        code: ({ node, inline, className, children, ...props }) =>
-          inline ? (
-            <code className="bg-gray-700 rounded px-1" {...props}>
-              {children}
-            </code>
-          ) : (
-            <code
-              className="block bg-gray-700 rounded p-2 my-2 whitespace-pre-wrap"
-              {...props}
-            >
-              {children}
-            </code>
-          ),
-        table: ({ node, ...props }) => (
-          <div className="overflow-x-auto my-4 rounded-md shadow-xl mb-5 border border-gray-950/10">
-            <table
-              className="min-w-full bg-white/10 text-white text-sm "
-              {...props}
-            />
-          </div>
-        ),
-        thead: ({ node, ...props }) => (
-          <thead className="bg-black text-white" {...props} />
-        ),
-        tbody: ({ node, ...props }) => (
-          <tbody className="divide-y divide-gray-950/20" {...props} />
-        ),
-        tr: ({ node, ...props }) => <tr className="" {...props} />,
-        th: ({ node, ...props }) => (
-          <th
-            className="px-4 py-2 text-left font-semibold align-top"
-            {...props}
-          />
-        ),
-        td: ({ node, ...props }) => (
-          <td className="px-4 py-2 align-top" {...props} />
-        ),
-      }}
+      components={MarkdownComponents}
     >
       {cleanContent}
     </ReactMarkdown>
@@ -125,9 +51,15 @@ const renderMarkdown = (content: string) => {
 const MessageBubble = memo(function MessageBubble({
   message,
   isCompleted,
+  onPlayAudio,
+  audioState,
+  isButtonLocked,
 }: {
   message: Message;
   isCompleted: boolean;
+  onPlayAudio: () => void;
+  audioState: "idle" | "loading" | "playing";
+  isButtonLocked: boolean;
 }) {
   return (
     <div
@@ -149,13 +81,26 @@ const MessageBubble = memo(function MessageBubble({
           {message.role === "user"
             ? message.content
             : renderMarkdown(message.content)}
+
+          {message.role === "assistant" && isCompleted && (
+            <button
+              onClick={onPlayAudio}
+              disabled={isButtonLocked}
+              className={`gradient-yellow text-purple-400 size-10 rounded-full flex items-center justify-center mt-4 ${
+                audioState === "loading" ? "animate-pulse" : ""
+              } ${isButtonLocked ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {audioState === "loading" ? (
+                <Spinner size={24} className="animate-spin" />
+              ) : audioState === "playing" ? (
+                <Pause size={24} />
+              ) : (
+                <SpeakerHigh size={24} />
+              )}
+            </button>
+          )}
         </div>
       </div>
-      {message.role === "assistant" && isCompleted && (
-        <button className="mt-2 text-white hover:text-purple-300">
-          <Play size={24} />
-        </button>
-      )}
     </div>
   );
 });
@@ -166,9 +111,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   streamingMessage,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [completedMessages, setCompletedMessages] = useState<Set<string>>(
     new Set()
   );
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+  const [audioState, setAudioState] = useState<"idle" | "loading" | "playing">(
+    "idle"
+  );
+  const [isButtonLocked, setIsButtonLocked] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -181,9 +132,67 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [isStreaming, streamingMessage]);
 
   useEffect(() => {
-    // Set all loaded messages as completed
     setCompletedMessages(new Set(messages.map((msg) => msg.id)));
   }, [messages]);
+
+  const playAudio = async (messageId: string, content: string) => {
+    if (isButtonLocked) return;
+    setIsButtonLocked(true);
+    const token = getAuthToken();
+
+    if (playingMessageId === messageId && audioRef.current) {
+      if (audioRef.current.paused) {
+        setAudioState("playing");
+        await audioRef.current.play();
+      } else {
+        setAudioState("idle");
+        audioRef.current.pause();
+        setPlayingMessageId(null);
+      }
+      setIsButtonLocked(false);
+      return;
+    }
+
+    setAudioState("loading");
+    setPlayingMessageId(messageId);
+
+    try {
+      const response = await fetch(
+        "https://api.afnb.ai-gelb.de/v1/audio/synthesize",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+            Accept: "audio/mpeg",
+          },
+          body: JSON.stringify({
+            input: content,
+            voice: "alloy",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        setAudioState("playing");
+        await audioRef.current.play();
+      }
+    } catch (error) {
+      console.error("Error playing audio:", error);
+      setAudioState("idle");
+      setPlayingMessageId(null);
+    } finally {
+      setIsButtonLocked(false);
+    }
+  };
 
   const memoizedMessages = useMemo(
     () =>
@@ -192,9 +201,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           key={message.id}
           message={message}
           isCompleted={completedMessages.has(message.id)}
+          onPlayAudio={() => playAudio(message.id, message.content)}
+          audioState={playingMessageId === message.id ? audioState : "idle"}
+          isButtonLocked={isButtonLocked}
         />
       )),
-    [messages, completedMessages]
+    [messages, completedMessages, playingMessageId, audioState, isButtonLocked]
   );
 
   return (
@@ -225,10 +237,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           </div>
         )}
         {streamingMessage && (
-          <MessageBubble message={streamingMessage} isCompleted={false} />
+          <MessageBubble
+            message={streamingMessage}
+            isCompleted={false}
+            onPlayAudio={() => {}}
+            audioState="idle"
+            isButtonLocked={isButtonLocked}
+          />
         )}
       </div>
       <div ref={bottomRef} />
+      <audio
+        ref={audioRef}
+        onEnded={() => {
+          setPlayingMessageId(null);
+          setAudioState("idle");
+          setIsButtonLocked(false);
+        }}
+      />
     </div>
   );
 };
