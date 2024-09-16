@@ -36,14 +36,26 @@ export default function WelcomeScreen({ onPromptSelect }: WelcomeScreenProps) {
     },
   };
 
-  const promptVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
+  const logoVariants = {
+    hidden: {
+      opacity: 0,
+      rotateY: 180,
+      scale: 0.5,
+    },
     visible: {
       opacity: 1,
+      rotateY: 0,
       scale: 1,
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
+        opacity: { duration: 2, delay: 0.5 },
+        rotateY: {
+          type: "spring",
+          stiffness: 50,
+          damping: 20,
+          duration: 2,
+          delay: 0.5,
+        },
+        scale: { duration: 2, delay: 0.5 },
       },
     },
   };
@@ -55,7 +67,7 @@ export default function WelcomeScreen({ onPromptSelect }: WelcomeScreenProps) {
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={itemVariants}>
+      <motion.div variants={logoVariants} style={{ perspective: 1000 }}>
         <Image
           src="/images/logos/welcome-logo.svg"
           alt="ai-gelb logo"
