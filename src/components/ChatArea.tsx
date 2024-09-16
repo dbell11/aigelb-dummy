@@ -9,6 +9,8 @@ import { motion } from "framer-motion";
 import MarkdownComponents from "@/components/MarkdownComponents";
 import { getAuthToken } from "@/utils";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 interface ChatAreaProps {
   messages: Message[];
   isStreaming: boolean;
@@ -157,21 +159,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     setPlayingMessageId(messageId);
 
     try {
-      const response = await fetch(
-        "https://api.afnb.ai-gelb.de/v1/audio/synthesize",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-            Accept: "audio/mpeg",
-          },
-          body: JSON.stringify({
-            input: content,
-            voice: "alloy",
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/audio/synthesize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+          Accept: "audio/mpeg",
+        },
+        body: JSON.stringify({
+          input: content,
+          voice: "alloy",
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

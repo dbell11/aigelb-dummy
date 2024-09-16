@@ -260,7 +260,7 @@ export default function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
           <div className="mt-6">
             <button
               type="submit"
-              className={`flex w-full justify-center items-center rounded-md bg-afnb-blue-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-afnb-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-afnb-blue-400 ${
+              className={`flex w-full justify-center items-center rounded-md bg-purple-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-afnb-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-afnb-blue-400 ${
                 isLoading ? "opacity-50 cursor-not-allowed" : ""
               }`}
               disabled={isLoading}

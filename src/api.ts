@@ -149,3 +149,44 @@ export async function deleteConversation(
 
   if (!response.ok) throw new Error("Failed to delete conversation");
 }
+
+export const loginUser = async (
+  email: string,
+  password: string
+): Promise<LoginResponse> => {
+  const response = await fetch("https://api.afnb.ai-gelb.de/v1/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Login failed");
+  }
+
+  return response.json();
+};
+
+export const registerUser = async (
+  firstName: string,
+  lastName: string,
+  email: string,
+  password: string
+): Promise<RegisterResponse> => {
+  const response = await fetch("https://api.afnb.ai-gelb.de/v1/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ firstName, lastName, email, password }),
+  });
+
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.detail || "Registration failed");
+  }
+
+  return response.json();
+};
