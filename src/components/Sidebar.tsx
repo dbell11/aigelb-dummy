@@ -10,12 +10,14 @@ import {
   CircleNotch,
   ChatsCircle,
   Plus,
+  Trash,
 } from "@phosphor-icons/react";
 import { Conversation } from "@/types";
+import { deleteConversation } from "@/api";
 import { getAuthToken } from "@/utils";
+import toast from "react-hot-toast";
 import Image from "next/image";
 import sidebarLogo from "@/../public/images/logos/sidebar-logo.png";
-
 interface SidebarProps {
   onConversationSelect: (conversation: Conversation) => void;
   onNewChat: () => void;
@@ -31,6 +33,7 @@ export default function Sidebar({
   const [showContent, setShowContent] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -65,6 +68,46 @@ export default function Sidebar({
       console.error("Error loading conversations:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (
+    conversationId: number,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation();
+    toast(
+      (t) => (
+        <span>
+          Sicher dass Sie diese Konversation löschen möchten?
+          <button
+            className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
+            onClick={() => {
+              handleDeleteConversation(conversationId);
+              toast.dismiss(t.id);
+            }}
+          >
+            Löschen
+          </button>
+        </span>
+      ),
+      { duration: 5000, position: "top-center" }
+    );
+  };
+
+  const handleDeleteConversation = async (conversationId: number) => {
+    setDeletingId(conversationId);
+    try {
+      await deleteConversation(conversationId);
+      setConversations((prev) =>
+        prev.filter((conv) => conv.id !== conversationId)
+      );
+      toast.success("Konversation erfolgreich gelöscht.");
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      toast.error("Failed to delete the conversation. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -113,6 +156,17 @@ export default function Sidebar({
     },
   };
 
+  const listItemVariants = {
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.3 } },
+    exit: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+  };
+
+  const toggleButtonVariants = {
+    hidden: { opacity: 0, transition: { duration: 0 } },
+    visible: { opacity: 1, transition: { delay: 0.2, duration: 0.2 } },
+  };
+
   return (
     <motion.div
       className="fixed left-4 top-4 bottom-4 bg-black/20 rounded-lg shadow-lg overflow-hidden z-50"
@@ -144,9 +198,19 @@ export default function Sidebar({
             </motion.div>
           )}
         </AnimatePresence>
-        <button onClick={toggleSidebar} className="text-white z-10">
-          <SidebarSimple size={24} />
-        </button>
+        <AnimatePresence mode="wait">
+          <motion.button
+            key={isOpen ? "open" : "closed"}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={toggleButtonVariants}
+            onClick={toggleSidebar}
+            className="text-white z-10"
+          >
+            <SidebarSimple size={24} />
+          </motion.button>
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -183,21 +247,45 @@ export default function Sidebar({
             ) : (
               <ul className="space-y-4 max-h-[calc(100vh-460px)] overflow-y-auto">
                 {conversations.map((conversation) => (
-                  <li
+                  <motion.li
                     key={conversation.id}
+                    variants={listItemVariants}
+                    initial="visible"
+                    exit="exit"
                     title={
                       conversation.title || `Konversation ${conversation.id}`
                     }
-                    className="text-white cursor-pointer xl:transition-colors xl:duration-300 xl:hover:bg-white/10 rounded flex space-x-3 p-1"
+                    className="text-white cursor-pointer xl:transition-colors xl:duration-300 xl:hover:bg-white/10 rounded flex justify-between items-center p-1 group relative pr-5"
                     onClick={() => handleConversationClick(conversation)}
                   >
-                    <div className="icon">
-                      <ChatsCircle size={24} />
+                    <div className="flex space-x-3">
+                      <div className="icon">
+                        <ChatsCircle size={24} />
+                      </div>
+                      <div className="title line-clamp-1">
+                        {conversation.title ||
+                          `Konversation ${conversation.id}`}
+                      </div>
                     </div>
-                    <div className="title line-clamp-1">
-                      {conversation.title || `Konversation ${conversation.id}`}
-                    </div>
-                  </li>
+                    {deletingId === conversation.id ? (
+                      <CircleNotch
+                        className="animate-spin text-white"
+                        size={20}
+                        weight="light"
+                      />
+                    ) : (
+                      <button
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-0 flex flex-row h-full"
+                        onClick={(e) => handleDeleteClick(conversation.id, e)}
+                      >
+                        <Trash
+                          size={20}
+                          weight="bold"
+                          className="text-yellow-400 hover:text-yellow-500 self-center"
+                        />
+                      </button>
+                    )}
+                  </motion.li>
                 ))}
               </ul>
             )}

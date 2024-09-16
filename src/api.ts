@@ -133,3 +133,19 @@ async function summarizeConversation(
     );
   }
 }
+
+export async function deleteConversation(
+  conversationId: number
+): Promise<void> {
+  const token = getAuthToken();
+  if (!token) throw new Error("No auth token found");
+
+  const response = await fetch(`${API_URL}/conversation/${conversationId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error("Failed to delete conversation");
+}

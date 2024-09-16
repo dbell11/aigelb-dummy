@@ -10,6 +10,9 @@ import { createConversation, addUserMessage } from "@/api";
 import { Message, Conversation } from "@/types";
 import { getAuthToken } from "@/utils";
 import AnimatedBackgroundSVG from "./AnimatedBackground";
+import { Toaster } from "react-hot-toast";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const Chatbot: React.FC = () => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -88,7 +91,7 @@ const Chatbot: React.FC = () => {
       if (!token) throw new Error("No auth token found");
 
       const response = await fetch(
-        `https://api.afnb.ai-gelb.de/v1/conversation/${selectedConversation.id}`,
+        `${API_URL}/conversation/${selectedConversation.id}`,
         {
           headers: {
             accept: "application/json",
@@ -120,7 +123,7 @@ const Chatbot: React.FC = () => {
     console.log("Completing conversation with ID:", conversationId);
 
     const response = await fetch(
-      `https://api.afnb.ai-gelb.de/v1/conversation/${conversationId}/completion`,
+      `${API_URL}/conversation/${conversationId}/completion`,
       {
         method: "POST",
         headers: {
@@ -165,6 +168,7 @@ const Chatbot: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-purple-800 text-white">
+      <Toaster position="top-right" />
       <motion.div
         className="background-svg w-full h-screen fixed top-0 left-0 z-10 flex flex-row justify-center pointer-events-none"
         animate={{ opacity: isWelcomeScreenVisible ? 1 : 0.4 }}
