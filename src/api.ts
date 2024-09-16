@@ -25,7 +25,12 @@ export async function createConversation(input: string): Promise<Conversation> {
 
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-  return response.json();
+  const conversationData: Conversation = await response.json();
+
+  // Trigger summarization without waiting for it to complete
+  summarizeConversation(conversationData.id, token);
+
+  return conversationData;
 }
 
 export async function addUserMessage(
@@ -98,4 +103,33 @@ export async function fetchConversationMessages(
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
   return response.json();
+}
+
+async function summarizeConversation(
+  conversationId: number,
+  token: string
+): Promise<void> {
+  try {
+    const response = await fetch(
+      `${API_URL}/conversation/${conversationId}/summarize`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        `Summarization failed for conversation ${conversationId}: ${response.statusText}`
+      );
+    }
+  } catch (error) {
+    console.error(
+      `Error during summarization for conversation ${conversationId}:`,
+      error
+    );
+  }
 }
