@@ -3,6 +3,18 @@ import { getAuthToken } from "@/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+interface LoginResponse {
+  token: string;
+}
+
+interface RegisterResponse {
+  token: string;
+}
+
+interface ApiError {
+  detail: string;
+}
+
 export async function createConversation(input: string): Promise<Conversation> {
   const token = getAuthToken();
   if (!token) throw new Error("No auth token found");
