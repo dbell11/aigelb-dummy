@@ -13,7 +13,14 @@ export async function createConversation(input: string): Promise<Conversation> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message: input }),
+    body: JSON.stringify({
+      messages: [
+        {
+          role: "user",
+          content: input,
+        },
+      ],
+    }),
   });
 
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
