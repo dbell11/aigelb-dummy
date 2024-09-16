@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { PiQuestionFill } from "react-icons/pi";
+
+import { Question } from "@phosphor-icons/react";
 
 interface WelcomeScreenProps {
   onPromptSelect: (prompt: string) => void;
@@ -102,8 +103,9 @@ export default function WelcomeScreen({ onPromptSelect }: WelcomeScreenProps) {
             onClick={() => onPromptSelect(prompt)}
             className="bg-white/90 rounded text-left text-black p-4 shadow-[0px_2px_15px_rgba(0,0,0,0.25)] border-transparent border-[5px] flex items-center md:items-start space-x-2 md:space-x-3 xl:transition-all xl:duration-300 xl:hover:border-yellow-600"
           >
-            <PiQuestionFill
+            <Question
               size={32}
+              weight="fill"
               className="text-purple-400 flex-shrink-0"
             />
             <span className="line-clamp-1 md:line-clamp-none xl:text-xl xl:leading-[160%]">

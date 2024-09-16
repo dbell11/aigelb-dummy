@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  PiMicrophoneBold,
-  PiUploadSimpleBold,
-  PiPaperPlaneTiltBold,
-} from "react-icons/pi";
+  Microphone,
+  UploadSimple,
+  PaperPlaneTilt,
+} from "@phosphor-icons/react";
 
 interface InputAreaProps {
   onSend: (message: string) => void;
@@ -54,7 +54,7 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
             className="p-3 rounded-full text-yellow-400 focus:outline-none bg-purple-600 mr-2"
             aria-label="Use microphone"
           >
-            <PiMicrophoneBold size={24} />
+            <Microphone size={24} weight="bold" />
           </button>
           <textarea
             ref={textareaRef}
@@ -73,7 +73,7 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
             className="p-3 rounded-full text-yellow-400 focus:outline-none bg-purple-600 ml-2"
             aria-label="Upload file"
           >
-            <PiUploadSimpleBold size={24} />
+            <UploadSimple size={24} weight="bold" />
           </button>
           <button
             onClick={handleSend}
@@ -85,7 +85,7 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
             disabled={!message.trim() || disabled}
             aria-label="Send message"
           >
-            <PiPaperPlaneTiltBold size={24} />
+            <PaperPlaneTilt size={24} weight="bold" />
           </button>
         </div>
       </div>
