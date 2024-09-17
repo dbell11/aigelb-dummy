@@ -6,7 +6,11 @@ import Sidebar from "@/components/Sidebar";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import ChatArea from "@/components/ChatArea";
 import InputArea from "@/components/InputArea";
-import { createConversation, addUserMessage } from "@/api";
+import {
+  createConversation,
+  addUserMessage,
+  summarizeConversation,
+} from "@/api";
 import { Message, Conversation } from "@/types";
 import { getAuthToken } from "@/utils";
 import AnimatedBackgroundSVG from "./AnimatedBackground";
@@ -25,6 +29,7 @@ const Chatbot: React.FC = () => {
 
   const handleSubmit = async (input: string) => {
     setIsWelcomeScreenVisible(false);
+    setIsStreaming(true);
 
     const newMessage: Message = {
       role: "user",
@@ -32,55 +37,93 @@ const Chatbot: React.FC = () => {
       id: Date.now().toString(),
     };
 
-    setConversation((prev) => {
-      if (!prev) {
-        return null;
-      } else {
-        return {
-          ...prev,
-          messages: [...prev.messages, newMessage],
-        };
-      }
-    });
-
-    setIsStreaming(true);
-
     try {
-      let currentConversation = conversation;
+      let currentConversation: Conversation;
+
       if (!conversation) {
-        try {
-          const newConversation = await createConversation(input);
-          setConversation({
-            ...newConversation,
-            messages: [newMessage, ...newConversation.messages],
-          });
-          currentConversation = newConversation;
-        } catch (error) {
-          console.error("Error creating conversation:", error);
-          return;
-        }
+        // Create a new conversation
+        currentConversation = await createConversation(input);
+        setConversation(currentConversation);
+
+        // The user message is already added by createConversation, so we don't need to add it again
+        // Just update the UI
+        setConversation((prev) => ({
+          ...prev!,
+          messages: [newMessage], // Start with just the user message
+        }));
+
+        // Start summarization in the background (don't await)
+        summarizeConversation(currentConversation.id);
       } else {
+        // Add message to existing conversation
         await addUserMessage(conversation.id, newMessage);
         currentConversation = conversation;
+
+        // Update the UI with the user's message
+        setConversation((prev) => ({
+          ...prev!,
+          messages: [...prev!.messages, newMessage],
+        }));
       }
 
-      if (currentConversation && currentConversation.id) {
-        const assistantMessage = await completeConversation(
-          currentConversation.id
-        );
-        setStreamingMessage(null);
-        setConversation((prev) => {
-          if (!prev) return currentConversation;
-          return {
-            ...prev,
-            messages: [...prev.messages, assistantMessage],
-          };
-        });
-      } else {
-        console.error("No valid conversation ID available for AI response");
+      // Start streaming the AI response
+      const response = await fetch(
+        `${API_URL}/conversation/${currentConversation.id}/completion`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            Accept: "text/event-stream",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("Unable to read response");
+
+      const decoder = new TextDecoder();
+      let assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        id: Date.now().toString(),
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        assistantMessage.content += chunk;
+
+        // Update the UI with the streamed content
+        setStreamingMessage({ ...assistantMessage });
+      }
+
+      // Final update to the conversation with the complete assistant message
+      setConversation((prev) => ({
+        ...prev!,
+        messages: [...prev!.messages, assistantMessage],
+      }));
+
+      setStreamingMessage(null);
     } catch (error) {
       console.error("Error:", error);
+      // Handle the error in the UI
+      setConversation((prev) => ({
+        ...prev!,
+        messages: [
+          ...prev!.messages,
+          {
+            role: "assistant",
+            content: "Sorry, an error occurred while processing your request.",
+            id: Date.now().toString(),
+          },
+        ],
+      }));
     } finally {
       setIsStreaming(false);
     }
@@ -115,57 +158,6 @@ const Chatbot: React.FC = () => {
     } catch (error) {
       console.error("Error loading conversation messages:", error);
     }
-  };
-
-  const handleStreamingUpdate = (updatedMessage: Message) => {
-    setStreamingMessage(updatedMessage);
-  };
-
-  const completeConversation = async (
-    conversationId: number
-  ): Promise<Message> => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No token found");
-
-    console.log("Completing conversation with ID:", conversationId);
-
-    const response = await fetch(
-      `${API_URL}/conversation/${conversationId}/completion`,
-      {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          authorization: "Bearer " + token,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("Unable to read response");
-
-    const decoder = new TextDecoder();
-
-    const streamId = Date.now().toString();
-    let fullContent = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      fullContent += chunk;
-      handleStreamingUpdate({
-        role: "assistant",
-        content: fullContent,
-        id: streamId,
-      });
-    }
-
-    console.log("AI response completed:", fullContent);
-    return { role: "assistant", content: fullContent, id: streamId };
   };
 
   const handleNewChat = () => {

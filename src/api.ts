@@ -26,6 +26,7 @@ export async function createConversation(input: string): Promise<Conversation> {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
+      title: "", // Empty title, will be generated later
       messages: [
         {
           role: "user",
@@ -39,27 +40,26 @@ export async function createConversation(input: string): Promise<Conversation> {
 
   const conversationData: Conversation = await response.json();
 
-  // Überprüfen Sie, ob alle erforderlichen Felder vorhanden sind
-  if (
-    !conversationData.id ||
-    !conversationData.title ||
-    !conversationData.uuid
-  ) {
+  // Ensure all required fields are present
+  if (!conversationData.id || !conversationData.uuid) {
     throw new Error("Incomplete conversation data received from server");
   }
 
-  // Stellen Sie sicher, dass das messages-Array initialisiert ist
+  // Ensure the messages array is initialized
   if (!Array.isArray(conversationData.messages)) {
-    conversationData.messages = [];
+    conversationData.messages = [
+      {
+        role: "user",
+        content: input,
+        id: Date.now().toString(),
+      },
+    ];
   }
 
-  // Stellen Sie sicher, dass das knowledge-Array initialisiert ist
+  // Ensure the knowledge array is initialized
   if (!Array.isArray(conversationData.knowledge)) {
     conversationData.knowledge = [];
   }
-
-  // Trigger summarization without waiting for it to complete
-  summarizeConversation(conversationData.id, token);
 
   return conversationData;
 }
@@ -136,30 +136,28 @@ export async function fetchConversationMessages(
   return response.json();
 }
 
-async function summarizeConversation(
-  conversationId: number,
-  token: string
+export async function summarizeConversation(
+  conversationId: number
 ): Promise<void> {
-  try {
-    const response = await fetch(
-      `${API_URL}/conversation/${conversationId}/summarize`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+  const token = getAuthToken();
+  if (!token) throw new Error("No auth token found");
 
-    if (!response.ok) {
+  try {
+    fetch(`${API_URL}/conversation/${conversationId}/summarize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch((error) => {
       console.error(
-        `Summarization failed for conversation ${conversationId}: ${response.statusText}`
+        `Error during summarization for conversation ${conversationId}:`,
+        error
       );
-    }
+    });
   } catch (error) {
     console.error(
-      `Error during summarization for conversation ${conversationId}:`,
+      `Error initiating summarization for conversation ${conversationId}:`,
       error
     );
   }
