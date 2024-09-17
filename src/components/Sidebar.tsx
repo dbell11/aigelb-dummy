@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   SidebarSimple,
@@ -22,6 +22,13 @@ interface SidebarProps {
   onConversationSelect: (conversation: Conversation) => void;
   onNewChat: () => void;
   isConversationActive: boolean;
+}
+
+interface SidebarButtonProps {
+  icon: ReactNode;
+  text: string;
+  isExpanded: boolean;
+  showContent: boolean;
 }
 
 export default function Sidebar({
@@ -333,7 +340,12 @@ export default function Sidebar({
   );
 }
 
-function SidebarButton({ icon, text, isExpanded, showContent }) {
+function SidebarButton({
+  icon,
+  text,
+  isExpanded,
+  showContent,
+}: SidebarButtonProps) {
   const sidebarBtnVariants = {
     hidden: {
       opacity: 0,

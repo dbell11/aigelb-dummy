@@ -39,6 +39,25 @@ export async function createConversation(input: string): Promise<Conversation> {
 
   const conversationData: Conversation = await response.json();
 
+  // Überprüfen Sie, ob alle erforderlichen Felder vorhanden sind
+  if (
+    !conversationData.id ||
+    !conversationData.title ||
+    !conversationData.uuid
+  ) {
+    throw new Error("Incomplete conversation data received from server");
+  }
+
+  // Stellen Sie sicher, dass das messages-Array initialisiert ist
+  if (!Array.isArray(conversationData.messages)) {
+    conversationData.messages = [];
+  }
+
+  // Stellen Sie sicher, dass das knowledge-Array initialisiert ist
+  if (!Array.isArray(conversationData.knowledge)) {
+    conversationData.knowledge = [];
+  }
+
   // Trigger summarization without waiting for it to complete
   summarizeConversation(conversationData.id, token);
 

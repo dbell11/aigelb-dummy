@@ -32,29 +32,36 @@ const Chatbot: React.FC = () => {
       id: Date.now().toString(),
     };
 
-    setConversation((prev) => ({
-      ...(prev || {
-        id: 0,
-        title: "",
-        user_id: 0,
-        knowledge: [],
-        messages: [],
-      }),
-      messages: [...(prev?.messages || []), newMessage],
-    }));
+    setConversation((prev) => {
+      if (!prev) {
+        return null;
+      } else {
+        return {
+          ...prev,
+          messages: [...prev.messages, newMessage],
+        };
+      }
+    });
 
     setIsStreaming(true);
 
     try {
       let currentConversation = conversation;
-      if (!currentConversation) {
-        currentConversation = await createConversation(input);
-        setConversation((prev) => ({
-          ...currentConversation,
-          messages: [...(prev?.messages || [])],
-        }));
+      if (!conversation) {
+        try {
+          const newConversation = await createConversation(input);
+          setConversation({
+            ...newConversation,
+            messages: [newMessage, ...newConversation.messages],
+          });
+          currentConversation = newConversation;
+        } catch (error) {
+          console.error("Error creating conversation:", error);
+          return;
+        }
       } else {
-        await addUserMessage(currentConversation.id, newMessage);
+        await addUserMessage(conversation.id, newMessage);
+        currentConversation = conversation;
       }
 
       if (currentConversation && currentConversation.id) {
