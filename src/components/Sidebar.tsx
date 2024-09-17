@@ -134,7 +134,7 @@ export default function Sidebar({
 
   const sidebarVariants = {
     expanded: { width: "240px" },
-    collapsed: { width: "48px" },
+    collapsed: { width: "54px" },
   };
 
   const logoTitleVariants = {
@@ -176,7 +176,7 @@ export default function Sidebar({
 
   return (
     <motion.div
-      className="fixed left-4 top-4 bottom-4 bg-black/20 rounded-lg shadow-lg overflow-hidden z-50"
+      className="fixed left-4 top-4 bottom-4 bg-black/20 rounded-lg shadow-lg overflow-hidden z-50 xl:transition-colors xl:border-[3px] xl:duration-500 xl:border-transparent xl:hover:border-yellow-500"
       initial="collapsed"
       animate={isOpen ? "expanded" : "collapsed"}
       variants={sidebarVariants}
