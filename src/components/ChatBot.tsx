@@ -164,6 +164,10 @@ const Chatbot: React.FC = () => {
     setIsWelcomeScreenVisible(true);
   };
 
+  const handleConversationCreated = (id: number) => {
+    setConversation((prev) => ({ ...prev, id }));
+  };
+
   return (
     <div className="flex h-screen bg-purple-800 text-white">
       <Toaster position="top-right" />
@@ -207,7 +211,13 @@ const Chatbot: React.FC = () => {
             />
           </motion.div>
         </div>
-        <InputArea onSend={handleSubmit} disabled={isStreaming} />
+        <InputArea
+          onSend={handleSubmit}
+          disabled={isStreaming}
+          conversationId={conversation ? conversation.id : null}
+          onConversationCreated={handleConversationCreated}
+          knowledgeItems={conversation?.knowledge || []}
+        />
       </main>
     </div>
   );

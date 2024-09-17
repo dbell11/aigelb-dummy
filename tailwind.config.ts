@@ -17,6 +17,7 @@ const config: Config = {
       colors: {
         yellow: {
           400: "#FEEB56",
+          500: "#FFC28A",
           600: "#ffc28a",
         },
         purple: {

@@ -1,4 +1,4 @@
-import { Message, Conversation } from "@/types";
+import { Message, Conversation, KnowledgeItem } from "@/types";
 import { getAuthToken } from "@/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -15,9 +15,13 @@ interface ApiError {
   detail: string;
 }
 
-export async function createConversation(input: string): Promise<Conversation> {
+export async function createConversation(
+  input?: string
+): Promise<Conversation> {
   const token = getAuthToken();
   if (!token) throw new Error("No auth token found");
+
+  const initialMessage = input ? [{ role: "user", content: input }] : [];
 
   const response = await fetch(`${API_URL}/conversation`, {
     method: "POST",
@@ -27,12 +31,7 @@ export async function createConversation(input: string): Promise<Conversation> {
     },
     body: JSON.stringify({
       title: "", // Empty title, will be generated later
-      messages: [
-        {
-          role: "user",
-          content: input,
-        },
-      ],
+      messages: initialMessage,
     }),
   });
 
@@ -47,13 +46,15 @@ export async function createConversation(input: string): Promise<Conversation> {
 
   // Ensure the messages array is initialized
   if (!Array.isArray(conversationData.messages)) {
-    conversationData.messages = [
-      {
-        role: "user",
-        content: input,
-        id: Date.now().toString(),
-      },
-    ];
+    conversationData.messages = input
+      ? [
+          {
+            role: "user",
+            content: input,
+            id: Date.now().toString(),
+          },
+        ]
+      : [];
   }
 
   // Ensure the knowledge array is initialized
@@ -246,3 +247,56 @@ export async function transcribeAudio(
   const data = await response.json();
   return data.transcription.trim();
 }
+
+export const uploadFile = async (
+  conversationId: number,
+  file: File
+): Promise<KnowledgeItem> => {
+  const token = getAuthToken();
+  if (!token) throw new Error("No token found");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(
+    `${API_URL}/conversation/${conversationId}/knowledge`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        authorization: "Bearer " + token,
+      },
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return { id: result.id, fileName: file.name };
+};
+
+export const deleteFile = async (
+  conversationId: number,
+  fileId: number
+): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(
+    `${API_URL}/conversation/${conversationId}/knowledge/${fileId}`,
+    {
+      method: "DELETE",
+      headers: {
+        accept: "application/json",
+        authorization: "Bearer " + token,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+};
