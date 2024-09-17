@@ -133,7 +133,7 @@ export default function Sidebar({
   };
 
   const sidebarVariants = {
-    expanded: { width: "240px" },
+    expanded: { width: "246px" },
     collapsed: { width: "54px" },
   };
 
