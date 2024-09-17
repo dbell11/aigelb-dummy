@@ -221,3 +221,30 @@ export const registerUser = async (
 
   return response.json();
 };
+
+export async function transcribeAudio(
+  audioBlob: Blob,
+  mimeType: string
+): Promise<string> {
+  const token = getAuthToken();
+  if (!token) throw new Error("No auth token found");
+
+  const formData = new FormData();
+  const fileExtension = mimeType.split("/")[1];
+  formData.append("audio_file", audioBlob, `recording.${fileExtension}`);
+
+  const response = await fetch(`${API_URL}/audio/transcribe`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Speech to text conversion failed");
+  }
+
+  const data = await response.json();
+  return data.transcription.trim();
+}

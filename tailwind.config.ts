@@ -31,9 +31,14 @@ const config: Config = {
           "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-10px)" },
           "20%, 40%, 60%, 80%": { transform: "translateX(10px)" },
         },
+        transcribe: {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.05)", opacity: "0.8" },
+        },
       },
       animation: {
         shake: "shake 0.82s cubic-bezier(.36,.07,.19,.97) both",
+        transcribe: "transcribe 1.5s ease-in-out infinite",
       },
     },
   },

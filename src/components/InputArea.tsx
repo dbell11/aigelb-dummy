@@ -3,7 +3,9 @@ import {
   Microphone,
   UploadSimple,
   PaperPlaneTilt,
+  StopCircle,
 } from "@phosphor-icons/react";
+import { transcribeAudio } from "@/api";
 
 interface InputAreaProps {
   onSend: (message: string) => void;
@@ -13,7 +15,11 @@ interface InputAreaProps {
 export default function InputArea({ onSend, disabled }: InputAreaProps) {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     adjustTextareaHeight();
@@ -23,7 +29,7 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 4 * 24); // Assuming 24px line height
+      const newHeight = Math.min(textarea.scrollHeight, 4 * 24);
       textarea.style.height = `${newHeight}px`;
     }
   };
@@ -42,6 +48,60 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/ogg")
+        ? "audio/ogg"
+        : "audio/mp4";
+
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        setIsTranscribing(true);
+        setMessage("Transkribiere Audiodatei...");
+        try {
+          const transcription = await transcribeAudio(audioBlob, mimeType);
+          setMessage(transcription);
+        } catch (error) {
+          console.error("Error transcribing audio:", error);
+          setMessage(
+            "Fehler bei der Transkription. Bitte versuchen Sie es erneut."
+          );
+        }
+        setIsTranscribing(false);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleMicrophoneClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
     <div className="p-4 relative z-40">
       <div className="max-w-5xl mx-auto relative">
@@ -51,10 +111,22 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
           }`}
         >
           <button
-            className="p-3 rounded-full text-yellow-400 focus:outline-none bg-purple-600 mr-2"
-            aria-label="Use microphone"
+            className={`p-3 rounded-full focus:outline-none mr-2 transition-all duration-300 ${
+              isRecording
+                ? "bg-red-600 text-white animate-pulse"
+                : isTranscribing
+                ? "bg-yellow-600 text-white animate-transcribe"
+                : "bg-purple-600 text-yellow-400"
+            }`}
+            onClick={handleMicrophoneClick}
+            disabled={isTranscribing}
+            aria-label={isRecording ? "Stop recording" : "Start recording"}
           >
-            <Microphone size={24} weight="bold" />
+            {isRecording ? (
+              <StopCircle size={24} weight="bold" />
+            ) : (
+              <Microphone size={24} weight="bold" />
+            )}
           </button>
           <textarea
             ref={textareaRef}
@@ -65,7 +137,7 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
             onBlur={() => setIsFocused(false)}
             className="flex-1 p-2 bg-transparent focus:outline-none text-black resize-none overflow-hidden placeholder:text-black/90 text-lg"
             placeholder="Sende eine Nachricht..."
-            disabled={disabled}
+            disabled={disabled || isRecording || isTranscribing}
             rows={1}
             style={{ minHeight: "24px", maxHeight: "96px" }}
           />
@@ -78,11 +150,13 @@ export default function InputArea({ onSend, disabled }: InputAreaProps) {
           <button
             onClick={handleSend}
             className={`p-3 rounded-full focus:outline-none transition-colors duration-200 ml-2 ${
-              message.trim() && !disabled
+              message.trim() && !disabled && !isRecording && !isTranscribing
                 ? "bg-purple-600 text-yellow-400"
                 : "bg-purple-600/50 text-yellow-400 cursor-not-allowed"
             }`}
-            disabled={!message.trim() || disabled}
+            disabled={
+              !message.trim() || disabled || isRecording || isTranscribing
+            }
             aria-label="Send message"
           >
             <PaperPlaneTilt size={24} weight="bold" />
