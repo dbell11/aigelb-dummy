@@ -45,11 +45,10 @@ const Chatbot: React.FC = () => {
         currentConversation = await createConversation(input);
         setConversation(currentConversation);
 
-        // The user message is already added by createConversation, so we don't need to add it again
-        // Just update the UI
+        // Update the UI with the user's message immediately
         setConversation((prev) => ({
           ...prev!,
-          messages: [newMessage], // Start with just the user message
+          messages: [newMessage],
         }));
 
         // Start summarization in the background (don't await)
@@ -59,7 +58,7 @@ const Chatbot: React.FC = () => {
         await addUserMessage(conversation.id, newMessage);
         currentConversation = conversation;
 
-        // Update the UI with the user's message
+        // Update the UI with the user's message immediately
         setConversation((prev) => ({
           ...prev!,
           messages: [...prev!.messages, newMessage],
