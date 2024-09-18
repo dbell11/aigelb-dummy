@@ -165,7 +165,24 @@ const Chatbot: React.FC = () => {
   };
 
   const handleConversationCreated = (id: number) => {
-    setConversation((prev) => ({ ...prev, id }));
+    setConversation((prev) => {
+      if (prev === null) {
+        // If there was no previous conversation, create a new one
+        return {
+          id,
+          title: "",
+          uuid: "", // You might want to generate a UUID here
+          messages: [],
+          knowledge: []
+        };
+      } else {
+        // If there was a previous conversation, update its ID
+        return {
+          ...prev,
+          id
+        };
+      }
+    });
   };
 
   return (
