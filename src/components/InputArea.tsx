@@ -291,7 +291,11 @@ export default function InputArea({
             aria-label={isUploading ? "Uploading..." : "Upload file"}
           >
             {isUploading ? (
-              <CircleNotch size={24} weight="bold" className="animate-spin" />
+              <CircleNotch
+                size={24}
+                weight="bold"
+                className="animate-spin cursor-not-allowed"
+              />
             ) : (
               <UploadSimple size={24} weight="bold" />
             )}
